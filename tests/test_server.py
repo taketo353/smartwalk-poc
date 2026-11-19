@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from server import LOCATION, create_server
+from api.server import LOCATION, create_server
 
 
 class TestDemo(unittest.TestCase):

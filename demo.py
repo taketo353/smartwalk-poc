@@ -5,7 +5,7 @@ import json
 import time
 from urllib.request import Request, urlopen
 
-from server import LOCATION
+from api.server import LOCATION
 
 
 def request(base_url, path, payload=None):
