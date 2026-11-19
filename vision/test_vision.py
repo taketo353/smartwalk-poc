@@ -1,10 +1,11 @@
 import contextlib
 import io
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from urllib.error import URLError
 
 from vision.__main__ import main
@@ -45,12 +46,13 @@ class VisionCliTests(unittest.TestCase):
                 with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                     status = main([
                         "model", "--image", "road.jpg", "--rspnet-dir", "upstream",
-                        "--weights", "weights.pth", "--class-indices", "class_indices.json",
+                        "--weights", "weights.pth",
                         "--image-source", "live", "--base-url", "http://localhost:8080/",
                     ])
 
         self.assertEqual(status, 0)
         predict.assert_called_once()
+        self.assertEqual(read_class_indices(predict.call_args.args[3])[9], "ice")
         sent, = request.call_args.args
         self.assertEqual(sent.full_url, "http://localhost:8080/vision")
         self.assertEqual(json.loads(sent.data), {
@@ -60,6 +62,67 @@ class VisionCliTests(unittest.TestCase):
             "vision_source": "model",
             "image_source": "live",
         })
+
+    def test_camera_posts_live_model_result(self):
+        payload, camera, predictor, status = self.run_camera_once((True, object()))
+
+        self.assertEqual(status, 0)
+        self.assertEqual(payload["label"], "ice")
+        self.assertEqual(payload["vision_source"], "model")
+        self.assertEqual(payload["image_source"], "live")
+        self.assertTrue(payload["image_id"].startswith("camera-2-"))
+        predictor.predict_rgb_array.assert_called_once()
+        camera.release.assert_called_once()
+
+    def test_camera_posts_unknown_when_frame_is_missing(self):
+        payload, camera, predictor, status = self.run_camera_once((False, None))
+
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["label"], "unknown")
+        self.assertEqual(payload["image_source"], "live")
+        predictor.predict_rgb_array.assert_not_called()
+        camera.release.assert_called_once()
+
+    def test_failed_saved_image_clears_previous_label(self):
+        with (
+            patch("vision.rspnet.predict_class", side_effect=OSError("bad image")),
+            patch("vision.__main__.urlopen") as request,
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            request.return_value.__enter__.return_value.read.return_value = b"{}"
+            status = main([
+                "model", "--image", "bad.jpg", "--rspnet-dir", "upstream",
+                "--weights", "weights.pth", "--class-indices", "class_indices.json",
+            ])
+        self.assertEqual(status, 1)
+        sent, = request.call_args.args
+        self.assertEqual(json.loads(sent.data)["label"], "unknown")
+
+    def run_camera_once(self, frame):
+        cv2 = MagicMock()
+        cv2.error = OSError
+        camera = cv2.VideoCapture.return_value
+        camera.isOpened.return_value = True
+        camera.read.return_value = frame
+        with (
+            patch.dict(sys.modules, {"cv2": cv2}),
+            patch("vision.rspnet.RSPNetClassifier") as classifier,
+            patch("vision.__main__.urlopen") as request,
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            request.return_value.__enter__.return_value.read.return_value = b"{}"
+            predictor = classifier.return_value
+            predictor.predict_rgb_array.return_value = "ice"
+            status = main([
+                "camera", "--device", "2", "--once", "--rspnet-dir", "upstream",
+                "--weights", "weights.pth", "--class-indices", "class_indices.json",
+            ])
+        cv2.VideoCapture.assert_called_once_with(2)
+        classifier.assert_called_once()
+        sent, = request.call_args.args
+        return json.loads(sent.data), camera, predictor, status
 
 
 class RspNetTests(unittest.TestCase):
