@@ -152,35 +152,90 @@ h2 { font-size: 1.04rem; }
 
 .location-name { margin-top: .2rem; font-size: 1.15rem; font-weight: 730; }
 .locator { margin-top: .75rem; }
-.locator-art {
-  display: grid;
-  place-items: center;
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  height: clamp(6.5rem, 18vw, 9.75rem);
+.slope-map {
+  display: block;
+  width: 100%;
+  height: auto;
   border: 1px solid #d8e5e1;
   border-radius: .7rem;
-  background: repeating-linear-gradient(-22deg, #edf5f2 0 1.85rem, #d7e7e2 1.85rem 1.9rem);
+  background: #edf5f2;
 }
 
-.path-edge, .path-center {
-  position: absolute;
-  width: 120%;
-  transform: rotate(-15deg);
+.map-contour path { fill: none; stroke: #d3e4df; stroke-width: 1.6; stroke-linecap: round; }
+.road-case, .road-body, .road-line { fill: none; stroke-linecap: round; }
+.road-case { stroke: #cadcda; stroke-width: 26; }
+.road-body { stroke: #fff; stroke-width: 22; }
+.road-line { stroke: #87aeaa; stroke-width: 2; stroke-dasharray: 9 8; }
+
+.map-note text {
+  fill: var(--muted);
+  font-size: 11.5px;
+  font-weight: 650;
+  paint-order: stroke;
+  stroke: #edf5f2;
+  stroke-width: 3.5;
+  stroke-linejoin: round;
 }
 
-.path-edge { height: 1.7rem; background: #fff; border-block: 1px solid #cadcda; }
-.path-center { border-top: 2px dashed #87aeaa; }
-.locator-point {
-  position: relative;
-  width: 1rem;
+.map-marker {
+  --marker: #1f5f8b;
+  --marker-halo: #1f5f8b2e;
+}
+
+.map-marker[data-risk="low"] { --marker: #17654e; --marker-halo: #17654e2e; }
+.map-marker[data-risk="caution"] { --marker: #9a6400; --marker-halo: #9a64002e; }
+.map-marker[data-risk="high"] { --marker: #a12232; --marker-halo: #a122322e; }
+
+.marker-halo { fill: var(--marker-halo); }
+.marker-round, .marker-wedge { fill: var(--marker); stroke: #fff; stroke-width: 2.2; }
+.map-marker[data-risk="caution"] .marker-round,
+.map-marker[data-risk="high"] .marker-round { display: none; }
+.map-marker[data-risk="low"] .marker-wedge,
+.map-marker[data-risk="unknown"] .marker-wedge { display: none; }
+
+.marker-mark { fill: #fff; font-size: 12px; font-weight: 700; }
+.map-marker[data-risk="caution"] .marker-mark,
+.map-marker[data-risk="high"] .marker-mark { transform: translateY(3px); }
+
+.marker-name, .marker-level {
+  font-size: 12.5px;
+  font-weight: 730;
+  paint-order: stroke;
+  stroke: #edf5f2;
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.marker-name { fill: #182d32; }
+.marker-level { fill: var(--marker); }
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .9rem;
+  margin: .7rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.map-legend li { display: inline-flex; align-items: center; gap: .3rem; }
+.legend-mark {
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
   aspect-ratio: 1;
-  border: .15rem solid #fff;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 .35rem #085e5633;
+  background: #1f5f8b;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 700;
 }
+
+.map-legend li[data-risk="low"] .legend-mark { background: #17654e; }
+.map-legend li[data-risk="caution"] .legend-mark { background: #9a6400; border-radius: .3rem; }
+.map-legend li[data-risk="high"] .legend-mark { background: #a12232; border-radius: .3rem; }
 
 figcaption { margin-top: .3rem; color: var(--muted); font-size: .8rem; text-align: right; }
 
