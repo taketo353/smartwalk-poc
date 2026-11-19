@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="280" viewBox="0 0 220 280">
+
+  <!-- outer frame -->
+  <path d="M18 272 V96 C 18 44, 60 10, 110 10 C 160 10, 202 44, 202 96 V272 Z" fill="#E86FA6"/>
+  <path d="M28 266 V98 C 28 52, 64 22, 110 22 C 156 22, 192 52, 192 98 V266 Z" fill="#FBD6E6"/>
+
+  <!-- glass -->
+  <path d="M40 256 V100 C 40 60, 70 34, 110 34 C 150 34, 180 60, 180 100 V256 Z" fill="#F6E8F7"/>
+
+  <!-- muntins -->
+  <g stroke="#E86FA6" stroke-width="5" stroke-linecap="round">
+    <path d="M110 36 V256"/>
+    <path d="M42 126 H178"/>
+    <path d="M42 190 H178"/>
+  </g>
+
+  <!-- curtains -->
+  <path d="M40 252 V100 C 40 62, 66 38, 96 35 C 78 70, 86 120, 70 160 C 58 192, 70 224, 56 252 Z" fill="#C23C7C" opacity="0.92"/>
+  <path d="M180 252 V100 C 180 62, 154 38, 124 35 C 142 70, 134 120, 150 160 C 162 192, 150 224, 164 252 Z" fill="#C23C7C" opacity="0.92"/>
+  <g stroke="#F3A8CB" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8">
+    <path d="M62 60 q6 90 -2 180"/>
+    <path d="M158 60 q-6 90 2 180"/>
+  </g>
+
+  <!-- tie-backs -->
+  <g fill="#E8C76A">
+    <rect x="46" y="168" width="30" height="11" rx="5.5"/>
+    <rect x="144" y="168" width="30" height="11" rx="5.5"/>
+  </g>
+
+  <!-- pediment ornament -->
+  <g transform="translate(110 18)">
+    <path d="M-26 6 q13 -16 26 -16 q13 0 26 16 q-13 -6 -26 -6 q-13 0 -26 6 Z" fill="#E8C76A"/>
+    <circle cx="0" cy="-6" r="6.5" fill="#C9A227"/>
+    <circle cx="0" cy="-6" r="2.6" fill="#FFF6E9"/>
+  </g>
+
+  <!-- sill -->
+  <rect x="10" y="264" width="200" height="14" rx="6" fill="#C23C7C"/>
+  <rect x="10" y="264" width="200" height="5" rx="2.5" fill="#E8C76A"/>
+
+</svg>

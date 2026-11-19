@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="140" viewBox="0 0 400 140">
+
+  <!-- back drape -->
+  <path d="M0 0 H400 V58 C 360 92, 320 50, 280 84 C 240 118, 200 56, 160 84 C 120 112, 80 52, 40 86 C 24 100, 10 92, 0 78 Z" fill="#B23A74"/>
+
+  <!-- front drape -->
+  <path d="M0 0 H400 V44 C 358 78, 318 36, 278 70 C 238 104, 198 42, 158 70 C 118 98, 78 38, 38 72 C 22 86, 10 78, 0 64 Z" fill="#D14E8C"/>
+
+  <!-- highlight folds -->
+  <g stroke="#F3A8CB" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M40 10 q4 30 -2 56"/>
+    <path d="M120 10 q4 30 -2 54"/>
+    <path d="M200 10 q4 30 -2 54"/>
+    <path d="M280 10 q4 30 -2 54"/>
+    <path d="M360 10 q4 28 -2 48"/>
+  </g>
+
+  <!-- gold trim line -->
+  <path d="M0 44 C 358 78, 318 36, 278 70 C 238 104, 198 42, 158 70 C 118 98, 78 38, 38 72 C 22 86, 10 78, 0 64" fill="none" stroke="#E8C76A" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- tassels -->
+  <g fill="#E8C76A">
+    <circle cx="278" cy="72" r="5"/><path d="M275 76 h6 l-1.5 14 h-3 Z"/>
+    <circle cx="158" cy="72" r="5"/><path d="M155 76 h6 l-1.5 14 h-3 Z"/>
+    <circle cx="38" cy="74" r="5"/><path d="M35 78 h6 l-1.5 14 h-3 Z"/>
+  </g>
+
+  <!-- centre bow -->
+  <g transform="translate(200 56)">
+    <path d="M0 2 C -16 -12, -38 -9, -38 4 C -38 17, -17 20, 0 6 Z" fill="#F06AA8"/>
+    <path d="M0 2 C 16 -12, 38 -9, 38 4 C 38 17, 17 20, 0 6 Z" fill="#F06AA8"/>
+    <path d="M-4 12 l-9 22 l10 -4 l-1 -18 Z" fill="#D14E8C"/>
+    <path d="M4 12 l9 22 l-10 -4 l1 -18 Z" fill="#D14E8C"/>
+    <ellipse cx="0" cy="5" rx="7" ry="8" fill="#E8C76A"/>
+  </g>
+
+</svg>

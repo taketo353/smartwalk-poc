@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+
+  <!-- large bow, filled -->
+  <g transform="translate(36 32)">
+    <path d="M0 2 C -11 -8, -26 -6, -26 3 C -26 12, -12 14, 0 5 Z" fill="#E86FA6"/>
+    <path d="M0 2 C 11 -8, 26 -6, 26 3 C 26 12, 12 14, 0 5 Z" fill="#E86FA6"/>
+    <path d="M-3 10 l-6 15 l7 -3 l-1 -12 Z" fill="#D14E8C"/>
+    <path d="M3 10 l6 15 l-7 -3 l1 -12 Z" fill="#D14E8C"/>
+    <ellipse cx="0" cy="4" rx="4.5" ry="5.5" fill="#C23C7C"/>
+  </g>
+
+  <!-- rose -->
+  <g transform="translate(120 44)">
+    <circle cx="0" cy="-8" r="5.5" fill="#C98BD6"/>
+    <circle cx="8" cy="-2.5" r="5.5" fill="#C98BD6"/>
+    <circle cx="5" cy="7" r="5.5" fill="#C98BD6"/>
+    <circle cx="-5" cy="7" r="5.5" fill="#C98BD6"/>
+    <circle cx="-8" cy="-2.5" r="5.5" fill="#C98BD6"/>
+    <circle cx="0" cy="0" r="4" fill="#E8C76A"/>
+  </g>
+
+  <!-- crown -->
+  <g transform="translate(118 118)">
+    <path d="M-14 8 L-14 -4 L-7 2 L0 -9 L7 2 L14 -4 L14 8 Z" fill="#E8C76A"/>
+    <rect x="-14" y="8" width="28" height="4.5" rx="2" fill="#C9A227"/>
+    <circle cx="-14" cy="-6" r="2.6" fill="#D14E8C"/>
+    <circle cx="0" cy="-11" r="2.6" fill="#D14E8C"/>
+    <circle cx="14" cy="-6" r="2.6" fill="#D14E8C"/>
+  </g>
+
+  <!-- heart -->
+  <g transform="translate(40 116)">
+    <path d="M0 11 C -14 2, -14 -9, -7 -9 C -2.8 -9, 0 -5.4, 0 -5.4 C 0 -5.4, 2.8 -9, 7 -9 C 14 -9, 14 2, 0 11 Z" fill="#D14E8C"/>
+    <path d="M-4 -4 q2 -2 4 -1" stroke="#FBD6E6" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- sparkles -->
+  <g fill="#E8C76A">
+    <path d="M80 12 C 81 18, 83 20, 89 21 C 83 22, 81 24, 80 30 C 79 24, 77 22, 71 21 C 77 20, 79 18, 80 12 Z"/>
+    <path d="M18 76 C 18.7 80, 20 81.3, 24 82 C 20 82.7, 18.7 84, 18 88 C 17.3 84, 16 82.7, 12 82 C 16 81.3, 17.3 80, 18 76 Z"/>
+    <path d="M144 86 C 144.7 90, 146 91.3, 150 92 C 146 92.7, 144.7 94, 144 98 C 143.3 94, 142 92.7, 138 92 C 142 91.3, 143.3 90, 144 86 Z"/>
+    <path d="M80 142 C 80.7 146, 82 147.3, 86 148 C 82 148.7, 80.7 150, 80 154 C 79.3 150, 78 148.7, 74 148 C 78 147.3, 79.3 146, 80 142 Z"/>
+  </g>
+
+</svg>

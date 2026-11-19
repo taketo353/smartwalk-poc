@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="130" viewBox="0 0 180 130">
+
+  <!-- tails -->
+  <path d="M82 54 L58 122 L80 110 L88 60 Z" fill="#B23A74"/>
+  <path d="M98 54 L122 122 L100 110 L92 60 Z" fill="#B23A74"/>
+
+  <!-- loops -->
+  <path d="M88 44 C 64 16, 18 20, 18 48 C 18 76, 62 82, 88 56 Z" fill="#E86FA6"/>
+  <path d="M92 44 C 116 16, 162 20, 162 48 C 162 76, 118 82, 92 56 Z" fill="#E86FA6"/>
+
+  <!-- loop shading -->
+  <path d="M88 48 C 70 28, 34 30, 32 50 C 30 68, 64 72, 86 54 Z" fill="none" stroke="#F3A8CB" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M92 48 C 110 28, 146 30, 148 50 C 150 68, 116 72, 94 54 Z" fill="none" stroke="#F3A8CB" stroke-width="2.6" stroke-linejoin="round"/>
+
+  <!-- knot -->
+  <ellipse cx="90" cy="50" rx="14" ry="16" fill="#C23C7C"/>
+  <ellipse cx="90" cy="50" rx="14" ry="16" fill="none" stroke="#E8C76A" stroke-width="2.6"/>
+  <circle cx="90" cy="50" r="4.5" fill="#E8C76A"/>
+
+</svg>
