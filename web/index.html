@@ -43,13 +43,29 @@
         <h2 id="location-heading">観測地点</h2>
         <p class="location-name">角間坂（デモ地点）</p>
         <figure class="locator">
-          <div class="locator-art" aria-hidden="true">
-            <span class="path-edge"></span>
-            <span class="path-center"></span>
-            <span class="locator-point"></span>
-          </div>
-          <figcaption>観測地点の模式図</figcaption>
+          <svg id="slope-map" class="slope-map" viewBox="0 0 320 210" role="img" aria-label="角間坂の簡易マップ">
+            <g class="map-contour">
+              <path d="M0 46C56 78 92 110 134 184"></path>
+              <path d="M62 14C118 48 156 82 200 158"></path>
+              <path d="M140 0C196 36 232 72 274 146"></path>
+            </g>
+            <path class="road-case" d="M40 186C92 178 104 142 148 126C196 108 232 92 276 40"></path>
+            <path class="road-body" d="M40 186C92 178 104 142 148 126C196 108 232 92 276 40"></path>
+            <path class="road-line" d="M40 186C92 178 104 142 148 126C196 108 232 92 276 40"></path>
+            <g class="map-note">
+              <text x="304" y="20" text-anchor="end">↗ 角間キャンパス方面（上り）</text>
+              <text x="16" y="202">↙ バス停方面（下り）</text>
+            </g>
+            <g id="map-markers"></g>
+          </svg>
+          <figcaption>観測地点の模式図（実際の地形とは異なります）</figcaption>
         </figure>
+        <ul class="map-legend">
+          <li data-risk="low"><span class="legend-mark" aria-hidden="true">○</span>低い</li>
+          <li data-risk="caution"><span class="legend-mark" aria-hidden="true">△</span>注意</li>
+          <li data-risk="high"><span class="legend-mark" aria-hidden="true">×</span>高い</li>
+          <li data-risk="unknown"><span class="legend-mark" aria-hidden="true">？</span>判定不明</li>
+        </ul>
       </section>
     </div>
 

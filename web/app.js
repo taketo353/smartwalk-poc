@@ -6,6 +6,14 @@ const risks = new Map([
   ['high', {name: '高い', icon: '!'}],
   ['unknown', {name: '判定不明', icon: '?'}],
 ]);
+const locations = [
+  {id: 'kakuma-slope-01', name: '角間坂', x: 148, y: 126},
+];
+const mapMarks = new Map([
+  ['low', '○'], ['caution', '△'], ['high', '×'], ['unknown', '？'],
+]);
+const markers = new Map();
+const svgNamespace = 'http://www.w3.org/2000/svg';
 const labels = new Map([
   ['dry', '乾燥'], ['wet', '湿潤'], ['snow', '積雪'], ['ice', '凍結'], ['unknown', '不明'],
 ]);
@@ -35,6 +43,44 @@ function formatTemperature(value) {
   return Number.isFinite(value) ? `${value} °C` : missing;
 }
 
+function createShape(name, attributes) {
+  const element = document.createElementNS(svgNamespace, name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
+  return element;
+}
+
+function buildMap() {
+  const layer = get('map-markers');
+  for (const spot of locations) {
+    const marker = createShape('g', {class: 'map-marker', 'data-risk': 'unknown', transform: `translate(${spot.x} ${spot.y})`});
+    const mark = createShape('text', {class: 'marker-mark', y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'central'});
+    const name = createShape('text', {class: 'marker-name', y: 30, 'text-anchor': 'middle'});
+    const level = createShape('text', {class: 'marker-level', y: 44, 'text-anchor': 'middle'});
+    name.textContent = spot.name;
+    marker.append(
+      createShape('circle', {class: 'marker-halo', r: 15}),
+      createShape('circle', {class: 'marker-round', r: 10}),
+      createShape('path', {class: 'marker-wedge', d: 'M0 -12L11 7H-11Z'}),
+      mark, name, level,
+    );
+    layer.append(marker);
+    markers.set(spot.id, {marker, mark, level, name: spot.name});
+  }
+}
+
+function showMap(status) {
+  const risk = risks.has(status?.risk) ? status.risk : 'unknown';
+  const summary = [];
+  for (const [id, entry] of markers) {
+    const level = id === status?.location_id ? risk : 'unknown';
+    entry.marker.setAttribute('data-risk', level);
+    entry.mark.textContent = mapMarks.get(level);
+    entry.level.textContent = risks.get(level).name;
+    summary.push(`${entry.name}は凍結リスク ${risks.get(level).name}`);
+  }
+  get('slope-map').setAttribute('aria-label', `角間坂の簡易マップ。${summary.join('、')}。`);
+}
+
 function showStatus(status, error) {
   const risk = risks.has(status?.risk) ? status.risk : 'unknown';
   const {name, icon} = risks.get(risk);
@@ -58,6 +104,8 @@ function showStatus(status, error) {
   if (status?.vision_source === 'manual') sampleInputs.push('手動ラベル');
   get('sample-notice').hidden = !sampleInputs.length;
   setText('sample-notice', sampleInputs.length ? `判定に使用した入力　${sampleInputs.join('・')}` : '');
+
+  showMap(status);
 
   if (isAdmin) {
     setText('location-id', status?.location_id ?? missing);
@@ -132,6 +180,7 @@ if (isAdmin) {
   get('admin-link').setAttribute('aria-current', 'page');
 }
 get('admin-view').hidden = !isAdmin;
+buildMap();
 
 window.addEventListener('offline', () => {
   connectionGeneration += 1;
