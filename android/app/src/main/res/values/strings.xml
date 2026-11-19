@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmartWalk</string>
+    <string name="settings">接続設定</string>
+    <string name="unnamed_server">接続先が未設定</string>
+    <string name="connect_server">SmartWalkを動かしているPCのアドレスを登録してください。</string>
+    <string name="settings_details">AndroidとPCを同じWi-Fiにつなぎます。エミュレータから同じPCに接続する場合は http://10.0.2.2:8000 を指定します。</string>
+    <string name="url_example">http://192.168.1.20:8000</string>
+    <string name="invalid_endpoint">LAN内のIPv4アドレスを使ったHTTP URL、またはHTTPS URLを入力してください。</string>
+    <string name="save">保存</string>
+    <string name="cancel">キャンセル</string>
+    <string name="retry">再接続</string>
+    <string name="unknown">判定不能</string>
+    <string name="loading">観測画面を読み込んでいます。</string>
+    <string name="unreachable">SmartWalkに接続できません。PCのサーバーとWi-Fiを確認してください。</string>
+</resources>
