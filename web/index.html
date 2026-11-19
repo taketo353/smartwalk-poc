@@ -3,14 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#085e56">
   <title>路面の凍結情報 | SmartWalk</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOSIgZmlsbD0iIzA4NWU1NiIvPjxnIHRyYW5zZm9ybT0icm90YXRlKC0zMiAxNiAxNikiIHN0cm9rZT0iI2YxZmJmNyIgc3Ryb2tlLXdpZHRoPSIyLjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjgiIHkxPSIxMi41IiB4Mj0iMjQiIHkyPSIxMi41Ii8+PGxpbmUgeDE9IjgiIHkxPSIxOC41IiB4Mj0iMjQiIHkyPSIxOC41Ii8+PC9nPjwvc3ZnPg==">
   <link rel="stylesheet" href="/web/styles.css">
   <script src="/web/app.js" defer></script>
 </head>
 <body>
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-low" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="8.4"></circle>
+      <path d="M8.3 12.4l2.5 2.6 5-5.6"></path>
+    </symbol>
+    <symbol id="icon-caution" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 4.6 20.6 18.4a1.6 1.6 0 0 1-1.4 2.4H4.8a1.6 1.6 0 0 1-1.4-2.4L12 4.6Z"></path>
+      <line x1="12" y1="10" x2="12" y2="14.2"></line>
+      <circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"></circle>
+    </symbol>
+    <symbol id="icon-high" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="3.5" x2="12" y2="20.5"></line>
+      <line x1="4.8" y1="7.9" x2="19.2" y2="16.1"></line>
+      <line x1="19.2" y1="7.9" x2="4.8" y2="16.1"></line>
+    </symbol>
+    <symbol id="icon-unknown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.2 9.4a2.8 2.8 0 1 1 4.6 2.1c-.9.8-1.6 1.3-1.6 2.6"></path>
+      <circle cx="12" cy="17.4" r="0.95" fill="currentColor" stroke="none"></circle>
+    </symbol>
+  </svg>
+  <canvas id="snow-canvas" aria-hidden="true"></canvas>
+  <img id="medallion-watermark" src="/web/images/gold-medallion.svg" alt="">
+  <img id="pattern-watermark" src="/web/images/pattern-bg-rich.svg" alt="">
+  <div id="risk-flash" aria-hidden="true"></div>
   <header class="site-header">
     <div class="shell header-content">
-      <a class="brand" href="/student"><span class="brand-mark" aria-hidden="true"></span>SmartWalk</a>
+      <a class="brand" href="/student"><span class="brand-mark" aria-hidden="true"></span>SmartWalk<img class="heart-key-charm" src="/web/images/heart-key.svg" alt=""></a>
       <nav aria-label="表示切り替え">
         <a id="student-link" href="/student" aria-current="page">学生向け</a>
         <a id="admin-link" href="/admin">大学向け</a>
@@ -20,26 +46,75 @@
 
   <main class="shell">
     <div class="page-intro">
+      <img class="curtain-banner" src="/web/images/cloud-banner.svg" alt="">
       <h1 id="page-title">路面の凍結情報</h1>
       <p>試験運用中の参考情報です。通行前に現地の路面を確認してください。</p>
+      <img class="ornament-divider" src="/web/images/ornament-divider.svg" alt="">
     </div>
     <noscript><p class="notice">観測データを表示するには JavaScript を有効にしてください。</p></noscript>
 
     <div class="overview">
+      <div class="risk-panel-stage">
+      <img class="canopy-decor" src="/web/images/canopy.svg" alt="">
       <section class="card risk-panel" id="risk-panel" data-risk="unknown" aria-labelledby="risk-heading">
+        <img class="crown-badge" src="/web/images/crown.svg" alt="">
+        <svg class="sparkle sparkle-a" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8Z"></path></svg>
+        <svg class="sparkle sparkle-b" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8Z"></path></svg>
+        <div class="mascot" aria-hidden="true">
+          <svg viewBox="0 0 70 70">
+            <circle class="mascot-body" cx="35" cy="35" r="28"></circle>
+            <g class="mascot-face mascot-face-low">
+              <path d="M18 30q5 -7 10 0"></path>
+              <path d="M42 30q5 -7 10 0"></path>
+              <circle class="mascot-blush" cx="15" cy="40" r="3"></circle>
+              <circle class="mascot-blush" cx="55" cy="40" r="3"></circle>
+              <path d="M19 42q16 14 32 0"></path>
+            </g>
+            <g class="mascot-face mascot-face-caution">
+              <ellipse class="mascot-fill" cx="24" cy="32" rx="2.6" ry="3.4"></ellipse>
+              <ellipse class="mascot-fill" cx="46" cy="32" rx="2.6" ry="3.4"></ellipse>
+              <path d="M18 24q6 -4 11 -1"></path>
+              <path d="M52 24q-6 -4 -11 -1"></path>
+              <path d="M24 46q11 4 22 0"></path>
+              <path class="mascot-sweat" d="M52 16q4 5 0 8q-4 -3 0 -8Z"></path>
+            </g>
+            <g class="mascot-face mascot-face-high">
+              <circle class="mascot-fill" cx="24" cy="31" r="4.6"></circle>
+              <circle class="mascot-glint" cx="25.4" cy="29.4" r="1.2"></circle>
+              <circle class="mascot-fill" cx="46" cy="31" r="4.6"></circle>
+              <circle class="mascot-glint" cx="47.4" cy="29.4" r="1.2"></circle>
+              <path d="M17 21l8 3"></path>
+              <path d="M53 21l-8 3"></path>
+              <ellipse class="mascot-fill" cx="35" cy="47" rx="6" ry="5"></ellipse>
+            </g>
+            <g class="mascot-face mascot-face-unknown">
+              <line x1="19" y1="32" x2="29" y2="32"></line>
+              <line x1="41" y1="32" x2="51" y2="32"></line>
+              <path d="M29 46q6 4 12 0"></path>
+              <text class="mascot-query" x="48" y="20">？</text>
+            </g>
+          </svg>
+        </div>
         <h2 id="risk-heading">現在の凍結リスク</h2>
         <div role="status">
           <div class="risk-value">
-            <span class="risk-icon" id="risk-icon" aria-hidden="true">?</span>
+            <span class="risk-icon" id="risk-icon" aria-hidden="true">
+              <svg class="risk-icon-glyph" viewBox="0 0 24 24"><use id="risk-icon-use" href="#icon-unknown"></use></svg>
+            </span>
             <span id="risk-level">判定不明</span>
           </div>
+          <p id="risk-mood" class="risk-mood"></p>
           <p id="risk-reason" class="risk-reason">観測データを取得中です。</p>
         </div>
-        <p class="observed">観測時刻 <time id="observation-time">未取得</time></p>
+        <p class="observed"><span class="live-dot" aria-hidden="true"></span>観測時刻 <time id="observation-time">未取得</time></p>
         <p id="sample-notice" class="sample-notice" hidden></p>
       </section>
+      </div>
 
-      <section class="card location-panel" aria-labelledby="location-heading">
+      <div class="location-panel-stage">
+      <img class="window-decor" src="/web/images/window-frame.svg" alt="">
+      <section class="card location-panel" id="location-panel" aria-labelledby="location-heading">
+        <img class="bow-decor" src="/web/images/bow-large.svg" alt="">
         <h2 id="location-heading">観測地点</h2>
         <p class="location-name">角間坂（デモ地点）</p>
         <figure class="locator">
@@ -61,12 +136,13 @@
           <figcaption>観測地点の模式図（実際の地形とは異なります）</figcaption>
         </figure>
         <ul class="map-legend">
-          <li data-risk="low"><span class="legend-mark" aria-hidden="true">○</span>低い</li>
-          <li data-risk="caution"><span class="legend-mark" aria-hidden="true">△</span>注意</li>
-          <li data-risk="high"><span class="legend-mark" aria-hidden="true">×</span>高い</li>
-          <li data-risk="unknown"><span class="legend-mark" aria-hidden="true">？</span>判定不明</li>
+          <li data-risk="low"><span class="legend-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#icon-low"></use></svg></span>低い</li>
+          <li data-risk="caution"><span class="legend-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#icon-caution"></use></svg></span>注意</li>
+          <li data-risk="high"><span class="legend-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#icon-high"></use></svg></span>高い</li>
+          <li data-risk="unknown"><span class="legend-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#icon-unknown"></use></svg></span>判定不明</li>
         </ul>
       </section>
+      </div>
     </div>
 
     <div id="admin-view" hidden>

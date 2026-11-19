@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="48" viewBox="0 0 340 48">
+  <g fill="none" stroke="#C9A227" stroke-width="2.2" stroke-linecap="round">
+
+    <path d="M8 24 H118"/>
+    <path d="M222 24 H332"/>
+
+    <path d="M118 24 q12 -14 24 -6 q9 6 0 12 q-9 5 -14 -3"/>
+    <path d="M222 24 q-12 -14 -24 -6 q-9 6 0 12 q9 5 14 -3"/>
+
+    <path d="M100 24 q8 -9 16 0 q-8 9 -16 0 Z" stroke-width="1.8"/>
+    <path d="M240 24 q-8 -9 -16 0 q8 9 16 0 Z" stroke-width="1.8"/>
+
+  </g>
+
+  <!-- centre rosette -->
+  <g transform="translate(170 24)">
+    <circle r="13" fill="#D14E8C"/>
+    <circle r="13" fill="none" stroke="#E8C76A" stroke-width="2.5"/>
+    <circle r="5" fill="#FFF6E9"/>
+    <g fill="#E8C76A">
+      <path d="M0 -20 C 1 -16, 2.4 -14.6, 6 -14 C 2.4 -13.4, 1 -12, 0 -8 C -1 -12, -2.4 -13.4, -6 -14 C -2.4 -14.6, -1 -16, 0 -20 Z"/>
+      <path d="M0 20 C 1 16, 2.4 14.6, 6 14 C 2.4 13.4, 1 12, 0 8 C -1 12, -2.4 13.4, -6 14 C -2.4 14.6, -1 16, 0 20 Z"/>
+    </g>
+  </g>
+
+  <!-- end dots -->
+  <circle cx="8" cy="24" r="3.4" fill="#C9A227"/>
+  <circle cx="332" cy="24" r="3.4" fill="#C9A227"/>
+
+</svg>

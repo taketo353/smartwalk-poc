@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+
+  <!-- outer laurel ring -->
+  <circle cx="90" cy="90" r="80" fill="none" stroke="#C9A227" stroke-width="3"/>
+  <circle cx="90" cy="90" r="72" fill="none" stroke="#E8C76A" stroke-width="6"/>
+  <circle cx="90" cy="90" r="63" fill="none" stroke="#C9A227" stroke-width="2"/>
+
+  <!-- beaded ring -->
+  <g fill="#FFF0C2">
+    <circle cx="90" cy="18" r="3.4"/><circle cx="141" cy="39" r="3.4"/>
+    <circle cx="162" cy="90" r="3.4"/><circle cx="141" cy="141" r="3.4"/>
+    <circle cx="90" cy="162" r="3.4"/><circle cx="39" cy="141" r="3.4"/>
+    <circle cx="18" cy="90" r="3.4"/><circle cx="39" cy="39" r="3.4"/>
+  </g>
+
+  <!-- inner field -->
+  <circle cx="90" cy="90" r="58" fill="#FFF6E9"/>
+  <circle cx="90" cy="90" r="52" fill="none" stroke="#D9BE7A" stroke-width="1.5" stroke-dasharray="3 5"/>
+
+  <!-- top cartouche -->
+  <g transform="translate(90 14)">
+    <path d="M-30 4 q15 -18 30 -18 q15 0 30 18 q-15 -7 -30 -7 q-15 0 -30 7 Z" fill="#E8C76A"/>
+    <circle cx="0" cy="-9" r="7" fill="#C9A227"/>
+    <circle cx="0" cy="-9" r="2.8" fill="#FFF6E9"/>
+  </g>
+
+  <!-- side flourishes -->
+  <g fill="none" stroke="#C9A227" stroke-width="2.4" stroke-linecap="round">
+    <path d="M14 78 q-10 12 0 24 q8 -12 0 -24 Z"/>
+    <path d="M166 78 q10 12 0 24 q-8 -12 0 -24 Z"/>
+  </g>
+
+  <!-- bottom ribbon -->
+  <g transform="translate(90 160)">
+    <path d="M-34 0 H34 V16 L0 9 L-34 16 Z" fill="#D14E8C"/>
+    <path d="M-34 0 l-10 -8 v8 Z" fill="#B23A74"/>
+    <path d="M34 0 l10 -8 v8 Z" fill="#B23A74"/>
+  </g>
+
+</svg>
