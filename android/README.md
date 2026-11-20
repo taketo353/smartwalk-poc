@@ -2,6 +2,8 @@
 
 学生向けの危険度と簡易マップ、大学向けの温度・画像判定・観測履歴をAndroidアプリで確認できます。PCのSmartWalk APIにつないで使います。
 
+[検証用APK](../docs/evidence/SmartWalk-Android-debug.apk) · [エミュレータでの検証記録](../docs/poc-validation.md#android版)
+
 ## Android Emulatorで試す
 
 1. Android Studioで `android/` を開きます。ビルドにはJDK 17とAndroid SDK Platform 35が必要です。Android 7.0（API 24）以降に対応しています。

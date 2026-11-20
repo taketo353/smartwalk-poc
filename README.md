@@ -2,7 +2,7 @@
 
 **[SmartWalk 設計書（全文）](SmartWalk.md)** · [1日PoCの実施手順](docs/one-day-poc.md)
 
-[Androidアプリの起動・検証手順](android/README.md)
+[Androidアプリの起動手順](android/README.md) · [PoCの検証記録](docs/poc-validation.md)
 
 金沢大学・角間坂を想定した1地点のデモです。路面温度と画像ラベルをPCで受け取り、参考危険度を学生向け画面と大学向け画面に表示します。AtomS3Rを接続すると端末でも同じ判定を確認できます。
 

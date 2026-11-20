@@ -1,0 +1,9 @@
+﻿source,expected,reference,crop_pixels,whole_model_class,whole_condition,sidewalk_model_class,sidewalk_condition
+https://commons.wikimedia.org/wiki/File:Gehweg_002_2014_11_09.jpg,dry,Visual pavement interpretation,"(230, 826, 778, 1308)",wet_asphalt_smooth,wet,melted_snow,snow
+https://commons.wikimedia.org/wiki/File:Footpath_pavement.jpg,dry,Visual pavement interpretation,"(269, 410, 691, 684)",water_asphalt_smooth,wet,dry_gravel,dry
+"https://commons.wikimedia.org/wiki/File:Bluestone_sidewalk_-_Manhattan,_New_York_City_-_DSC06865.jpg",wet,Visible wet pavement and reflections,"(163, 691, 768, 1210)",water_asphalt_smooth,wet,water_asphalt_smooth,wet
+"https://commons.wikimedia.org/wiki/File:Tulips_beside_a_wet_sidewalk,_Baltimore_County,_Maryland.jpg",wet,Caption and visible wet pavement,"(77, 1037, 883, 1229)",water_asphalt_severe,wet,water_asphalt_smooth,wet
+https://commons.wikimedia.org/wiki/File:Dillard_Street_in_the_snow.jpg,snow,Caption and snow on pavement,"(403, 934, 883, 1229)",water_asphalt_smooth,wet,wet_concrete_smooth,wet
+"https://commons.wikimedia.org/wiki/File:2024-01-17_13_49_11_Human_and_dog_footprints_on_a_snow-covered_sidewalk_along_Lochatong_Road_in_the_Mountainview_section_of_Ewing_Township,_Mercer_County,_New_Jersey.jpg",snow,Caption and snow on pavement,"(144, 794, 787, 1203)",dry_asphalt_severe,dry,ice,ice
+https://commons.wikimedia.org/wiki/File:Icy_sidewalk_on_S%C3%B6rn%C3%A4isten_rantatie_in_January_2022.jpg,ice,Photographer's caption,"(355, 518, 749, 684)",water_asphalt_smooth,wet,water_asphalt_smooth,wet
+https://commons.wikimedia.org/wiki/File:Person_walking_a_dog_on_an_icy_sidewalk_in_Quebec_City.jpg,ice,Photographer's caption,"(730, 592, 931, 860)",water_asphalt_smooth,wet,fresh_snow,snow
