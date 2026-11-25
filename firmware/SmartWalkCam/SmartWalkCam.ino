@@ -1,13 +1,29 @@
 // SmartWalk observation node for AtomS3R-CAM + MLX90640 + SSD1306 OLED.
 // - Sends the road surface temperature (thermal ROI mean) to POST /observations every 5 s.
-// - Serves camera images and the thermal frame over HTTP for the vision side.
+// - Talks to the API either over USB (through usb_bridge.py on the PC) or over Wi-Fi.
+//   In Wi-Fi mode it also serves camera images and the thermal frame over HTTP.
 // - Estimates the road surface from light reflection in the camera image and sends the
 //   label to POST /vision, so the student and university views show it.
 // - The button (or "snap" on the serial monitor) takes a snapshot and sends immediately.
 
+#if __has_include("config.local.h")
+#include "config.local.h"
+#else
+#include "config.example.h"
+#endif
+
+#ifndef SMARTWALK_USE_WIFI
+#define SMARTWALK_USE_WIFI 0
+#endif
+#ifndef SMARTWALK_SEND_VISION
+#define SMARTWALK_SEND_VISION 1
+#endif
+
+#if SMARTWALK_USE_WIFI
 #include <WiFi.h>
 #include <WebServer.h>
 #include <HTTPClient.h>
+#endif
 #include <Wire.h>
 #include "esp_camera.h"
 #include "img_converters.h"
@@ -16,16 +32,6 @@
 #include <Adafruit_MLX90640.h>
 #include <Preferences.h>
 #include <math.h>
-
-#if __has_include("config.local.h")
-#include "config.local.h"
-#else
-#include "config.example.h"
-#endif
-
-#ifndef SMARTWALK_SEND_VISION
-#define SMARTWALK_SEND_VISION 1
-#endif
 
 constexpr char kLocationId[] = "kakuma-slope-01";
 constexpr uint32_t kPostIntervalMs = 5000;
@@ -42,7 +48,9 @@ constexpr int kCamXclk = 21, kCamSda = 12, kCamScl = 9;
 constexpr int kCamVsync = 10, kCamHref = 14, kCamPclk = 40;
 constexpr int kCamData[8] = {3, 42, 46, 48, 4, 17, 11, 13};  // D0..D7
 
+#if SMARTWALK_USE_WIFI
 WebServer server(80);
+#endif
 Adafruit_SSD1306 oled(128, 64, &Wire, -1);
 Adafruit_MLX90640 mlx;
 
@@ -275,6 +283,34 @@ String jsonString(const String& body, const char* key) {
   return end < 0 ? "" : body.substring(start + 1, end);
 }
 
+// Collects one line from the serial port without blocking. Returns true when a line is ready.
+bool readSerialLine(String& out) {
+  static String buffer;
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\r') continue;
+    if (c == '\n') {
+      out = buffer;
+      buffer = "";
+      out.trim();
+      return out.length() > 0;
+    }
+    if (buffer.length() < 512) buffer += c;
+  }
+  return false;
+}
+
+void handleCommand(const String& line);
+
+bool linkUp() {
+#if SMARTWALK_USE_WIFI
+  return WiFi.status() == WL_CONNECTED;
+#else
+  return true;
+#endif
+}
+
+#if SMARTWALK_USE_WIFI
 int postJson(const char* path, const String& body, String* response) {
   HTTPClient http;
   http.setTimeout(kHttpTimeoutMs);
@@ -285,10 +321,32 @@ int postJson(const char* path, const String& body, String* response) {
   http.end();
   return code;
 }
+#else
+// USB mode: usb_bridge.py on the PC forwards "@POST <path> <json>" to the API and
+// answers with "@RESP <status> <json>". Returns -1 when the bridge does not answer.
+int postJson(const char* path, const String& body, String* response) {
+  Serial.printf("@POST %s %s\n", path, body.c_str());
+  uint32_t start = millis();
+  String line;
+  while (millis() - start < 2 * kHttpTimeoutMs) {
+    if (readSerialLine(line)) {
+      if (line.startsWith("@RESP ")) {
+        int space = line.indexOf(' ', 6);
+        int code = line.substring(6, space < 0 ? line.length() : space).toInt();
+        if (response) *response = space < 0 ? "" : line.substring(space + 1);
+        return code;
+      }
+      handleCommand(line);
+    }
+    delay(1);
+  }
+  return -1;
+}
+#endif
 
 void postVision() {
 #if SMARTWALK_SEND_VISION
-  if (WiFi.status() != WL_CONNECTED) return;
+  if (!linkUp()) return;
   observeImage(nullptr);
   String body = String("{\"location_id\":\"") + kLocationId +
                 "\",\"image_id\":\"atoms3r-cam-reflection\",\"label\":\"" + surfaceLabel +
@@ -300,7 +358,7 @@ void postVision() {
 
 void postObservation() {
   lastPostAt = millis();
-  if (WiFi.status() != WL_CONNECTED) {
+  if (!linkUp()) {
     postResult = "no WiFi";
     return;
   }
@@ -311,13 +369,16 @@ void postObservation() {
                 ",\"temperature_source\":\"sensor\"}";
   String response;
   int code = postJson("/observations", body, &response);
-  postResult = code == 200 ? "OK" : "ERR " + String(code);
+  if (code == 200) postResult = "OK";
+  else if (code < 0) postResult = SMARTWALK_USE_WIFI ? "no API" : "no bridge";
+  else postResult = "ERR " + String(code);
   if (code == 200) risk = jsonString(response, "risk");
   Serial.printf("POST %s -> %d risk=%s\n", body.c_str(), code, risk.c_str());
 }
 
-// ---------- HTTP server ----------
+// ---------- HTTP server (Wi-Fi mode) ----------
 
+#if SMARTWALK_USE_WIFI
 void sendJpeg(const uint8_t* jpg, size_t len) {
   server.sendHeader("Cache-Control", "no-store");
   server.setContentLength(len);
@@ -355,8 +416,9 @@ void handleSnapshot() {
   }
   sendJpeg(snapJpg, snapLen);
 }
+#endif
 
-void handleThermal() {
+String thermalJson() {
   float t = surfaceTemperature();
   String s;
   s.reserve(6500);
@@ -373,9 +435,7 @@ void handleThermal() {
     s += isfinite(frame[i]) ? String(frame[i], 1) : String("null");
   }
   s += "]}";
-  server.sendHeader("Cache-Control", "no-store");
-  server.sendHeader("Access-Control-Allow-Origin", "*");
-  server.send(200, "application/json", s);
+  return s;
 }
 
 String reflectionJson() {
@@ -407,6 +467,13 @@ String reflectionJson() {
   return s;
 }
 
+#if SMARTWALK_USE_WIFI
+void handleThermal() {
+  server.sendHeader("Cache-Control", "no-store");
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", thermalJson());
+}
+
 void handleReflection() {
   server.sendHeader("Cache-Control", "no-store");
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -423,6 +490,7 @@ void handleCalibrate() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", reflectionJson());
 }
+#endif
 
 // ---------- snapshot button ----------
 
@@ -439,6 +507,16 @@ void takeSnapshot() {
     Serial.println("Snapshot failed");
   }
   readThermal();
+#if !SMARTWALK_USE_WIFI
+  // USB mode: hand the picture and the thermal frame to usb_bridge.py, which saves them.
+  if (jpg) {
+    Serial.printf("@JPEG %u\n", (unsigned)len);
+    Serial.write(jpg, len);
+    Serial.println();
+  }
+  Serial.print("@THERMAL ");
+  Serial.println(thermalJson());
+#endif
   postNow = true;
 }
 
@@ -455,10 +533,7 @@ void checkButton() {
 #endif
 }
 
-void checkSerial() {
-  if (!Serial.available()) return;
-  String line = Serial.readStringUntil('\n');
-  line.trim();
+void handleCommand(const String& line) {
   if (line == "snap") {
     takeSnapshot();
   } else if (line.startsWith("cal ")) {
@@ -470,6 +545,11 @@ void checkSerial() {
   } else if (line.length()) {
     Serial.println("Commands: snap, info, cal dry|wet|ice|snow|clear");
   }
+}
+
+void checkSerial() {
+  String line;
+  if (readSerialLine(line)) handleCommand(line);
 }
 
 // ---------- OLED ----------
@@ -492,8 +572,12 @@ void drawOled() {
   oled.setCursor(0, 41);
   oled.printf("Img %s  API %s", surfaceLabel.c_str(), postResult.c_str());
   oled.setCursor(0, 52);
+#if SMARTWALK_USE_WIFI
   if (WiFi.status() == WL_CONNECTED) oled.print(WiFi.localIP());
   else oled.print("WiFi connecting");
+#else
+  oled.print("USB bridge");
+#endif
   oled.display();
 }
 
@@ -524,6 +608,7 @@ void setup() {
   cameraReady = initCamera();
   loadCalibration();
 
+#if SMARTWALK_USE_WIFI
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.begin(SMARTWALK_WIFI_SSID, SMARTWALK_WIFI_PASSWORD);
@@ -535,19 +620,21 @@ void setup() {
   server.on("/reflection.json", handleReflection);
   server.on("/calibrate", handleCalibrate);
   server.begin();
+#endif
 }
 
 void loop() {
-  static bool wasConnected = false;
   static uint32_t thermalReadAt = 0, oledAt = 0;
+#if SMARTWALK_USE_WIFI
+  static bool wasConnected = false;
   bool connected = WiFi.status() == WL_CONNECTED;
   if (connected && !wasConnected) {
     Serial.print("WiFi connected: http://");
     Serial.println(WiFi.localIP());
   }
   wasConnected = connected;
-
   server.handleClient();
+#endif
   checkButton();
   checkSerial();
 

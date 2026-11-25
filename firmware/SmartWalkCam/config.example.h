@@ -1,6 +1,12 @@
 #pragma once
 
 // Copy this file to config.local.h and fill in the values.
+
+// 0: talk to the API over the USB cable through usb_bridge.py (no Wi-Fi needed).
+// 1: talk to the API over Wi-Fi and serve images over HTTP.
+#define SMARTWALK_USE_WIFI 0
+
+// Used only when SMARTWALK_USE_WIFI is 1.
 #define SMARTWALK_WIFI_SSID ""
 #define SMARTWALK_WIFI_PASSWORD ""
 #define SMARTWALK_API_URL "http://192.0.2.1:8000"

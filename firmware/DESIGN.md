@@ -61,24 +61,23 @@ MLX90640（55°×35°）とカメラ（57.6°）は視野がほぼ同じで、�
 
 ## APIとの受け渡し
 
-- 路面温度は、熱画像の中央部（列8〜23、行6〜17）の平均値を `surface_temperature_c` として5秒ごとに `POST /observations` に送る。`temperature_source` は `sensor`。読み取れないときは `null`。
-- 反射から推定した路面状態を、温度の直前に `POST /vision`（`vision_source: "model"`、`image_source: "live"`）で送る。
-- 返ってきた `risk` をOLEDに表示する。
-- 画像は観測ノードが配信し、画像担当が取りに行く。サーバ側の変更は不要。
+デモ会場ではWi-Fiにつなげない前提で、既定はUSBケーブルでつなぐ。APIは同じPCで動かす。
 
-| URL | 内容 |
-| --- | --- |
-| `http://<観測ノードのIP>/snapshot.jpg` | ボタンで最後に撮った画像 |
-| `http://<観測ノードのIP>/capture.jpg` | その場で撮った画像 |
-| `http://<観測ノードのIP>/thermal.json` | 熱画像（32×24）と中央部の平均・最小・最大 |
-| `http://<観測ノードのIP>/reflection.json` | 反射の特徴量と判定結果 |
+```text
+本体 ──USB── PC（firmware/usb_bridge.py ── server.py ── /student・/admin）
+```
+
+- 本体は5秒ごとに、反射から推定した路面状態と路面温度（熱画像の中央部、列8〜23・行6〜17の平均）をシリアルに `@POST /vision ...`、`@POST /observations ...` として出す。PCの `usb_bridge.py` がそれをAPIに送り、返事を `@RESP ...` で本体に返す。本体は返ってきた `risk` をOLEDに表示する。
+- ボタンで撮った画像と熱画像は、`usb_bridge.py` がPCの `data/snapshots/` に保存する。画像担当はこれを使える。
+- APIの入口は既存の `POST /vision` と `POST /observations` のままなので、サーバ側の変更は不要。
+- Wi-Fiが使える場合は `SMARTWALK_USE_WIFI` を `1` にすると、本体が直接APIに送り、画像をHTTPで配信する。
 
 ## 他担当への相談事項
 
 このフォルダの外は変更しない。必要な変更は各担当に相談する。
 
-- 画像:デモで路面状態を反射による判定とRSPNetのどちらで出すか決める。RSPNetを使う場合、観測ノードの `snapshot.jpg` を保存して分類に使えるか。
-- Web:`thermal.json` の熱画像を大学向け画面に表示できるか（任意）。
+- 画像:デモで路面状態を反射による判定とRSPNetのどちらで出すか決める。RSPNetを使う場合、PCの `data/snapshots/latest-snapshot.jpg` を分類に使えるか。
+- Web:`data/snapshots/latest-thermal.json` の熱画像を大学向け画面に表示できるか（任意）。
 
 ## 固定設置の設計メモ（今後）
 
@@ -104,3 +103,4 @@ MLX90640（55°×35°）とカメラ（57.6°）は視野がほぼ同じで、�
 | 11/25 | 期限を考え、レンピン本体を流用し、デモは手持ちで3枚撮る方針に変更 |
 | 11/25 | 観測ノードのファームウェア `SmartWalkCam` を作成（ESP32 Arduino core 2.0.9でコンパイル確認、実機未確認） |
 | 11/25 | カメラ画像の光の反射から路面状態を推定し、`POST /vision` に送る機能を追加（APIとの連携はテストサーバで確認、実機未確認） |
+| 11/25 | Wi-Fiなしで動かすため、USBケーブル経由でAPIにつなぐ方式（`usb_bridge.py`）を追加し、既定にした（中継とAPIの連携は模擬端末で確認、実機未確認） |
