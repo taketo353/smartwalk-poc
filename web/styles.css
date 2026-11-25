@@ -621,7 +621,7 @@ body.flashy #pattern-watermark {
   pointer-events: none;
 }
 
-.curtain-banner, .ornament-divider, .canopy-decor, .crown-badge, .bow-decor { display: none; }
+.curtain-banner, .ornament-divider, .canopy-decor, .crown-badge, .bow-decor, .window-decor { display: none; }
 
 body.flashy .curtain-banner {
   display: block;
