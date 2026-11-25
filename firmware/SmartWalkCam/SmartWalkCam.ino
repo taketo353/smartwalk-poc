@@ -1,6 +1,8 @@
 // SmartWalk observation node for AtomS3R-CAM + MLX90640 + SSD1306 OLED.
 // - Sends the road surface temperature (thermal ROI mean) to POST /observations every 5 s.
 // - Serves camera images and the thermal frame over HTTP for the vision side.
+// - Estimates the road surface from light reflection in the camera image and sends the
+//   label to POST /vision, so the student and university views show it.
 // - The button (or "snap" on the serial monitor) takes a snapshot and sends immediately.
 
 #include <WiFi.h>
@@ -12,12 +14,17 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_MLX90640.h>
+#include <Preferences.h>
 #include <math.h>
 
 #if __has_include("config.local.h")
 #include "config.local.h"
 #else
 #include "config.example.h"
+#endif
+
+#ifndef SMARTWALK_SEND_VISION
+#define SMARTWALK_SEND_VISION 1
 #endif
 
 constexpr char kLocationId[] = "kakuma-slope-01";
@@ -50,6 +57,32 @@ uint32_t lastPostAt = 0;
 bool postNow = false;
 String risk = "-";               // risk from the last API response
 String postResult = "-";
+
+// ---------- reflection features ----------
+// Features of the centre of the camera image, used to tell dry / wet / ice / snow apart.
+//   brightness : mean luminance (0-1). Wet asphalt is darker, snow is brighter.
+//   highlight  : share of near-saturated pixels (0-1). Mirror-like (specular) reflection
+//                from a water or ice film shows up as glare.
+//   texture    : mean luminance step between neighbouring pixels, relative to brightness.
+//                A water or ice film smooths the rough asphalt texture.
+//   saturation : mean colour saturation (0-1). Snow is white (low saturation).
+constexpr int kFeatureCount = 4;
+const char* const kFeatureNames[kFeatureCount] = {"brightness", "highlight", "texture", "saturation"};
+const float kFeatureScale[kFeatureCount] = {1.0f, 5.0f, 2.0f, 1.0f};  // weights for distance
+const char* const kCalLabels[] = {"dry", "wet", "ice", "snow"};
+constexpr int kCalCount = 4;
+
+struct Reflection {
+  bool valid = false;
+  float f[kFeatureCount] = {0, 0, 0, 0};
+};
+
+Reflection reflection;             // features of the latest analysed image
+String surfaceLabel = "unknown";   // label sent to POST /vision
+String labelMethod = "rule";       // "rule" or "calibrated"
+float centroid[kCalCount][kFeatureCount];
+bool calibrated[kCalCount] = {false, false, false, false};
+Preferences prefs;
 
 // ---------- camera ----------
 
@@ -86,20 +119,118 @@ bool initCamera() {
   return true;
 }
 
-// Takes a fresh picture and returns a malloc'd JPEG (caller frees). nullptr on failure.
-uint8_t* captureJpeg(size_t* len) {
+// Analyses the centre half of an RGB565 frame (every 4th pixel).
+Reflection analyseFrame(const camera_fb_t* fb) {
+  Reflection r;
+  if (!fb || fb->format != PIXFORMAT_RGB565) return r;
+  const int w = fb->width, h = fb->height, step = 4;
+  const int x0 = w / 4, x1 = w * 3 / 4, y0 = h / 4, y1 = h * 3 / 4;
+  const int cols = (x1 - x0) / step;
+  static uint8_t prevRow[256];
+  double sumY = 0, sumSat = 0, sumGrad = 0;
+  long n = 0, highlights = 0, gradients = 0;
+  for (int yi = 0, y = y0; y < y1; y += step, yi++) {
+    uint8_t left = 0;
+    for (int xi = 0, x = x0; x < x1 && xi < 256; x += step, xi++) {
+      const uint8_t* p = fb->buf + 2 * (y * w + x);  // big-endian RGB565
+      uint8_t rr = p[0] & 0xF8;
+      uint8_t gg = ((p[0] & 0x07) << 5) | ((p[1] & 0xE0) >> 3);
+      uint8_t bb = (p[1] & 0x1F) << 3;
+      uint8_t luma = (77 * rr + 150 * gg + 29 * bb) >> 8;
+      uint8_t hi = max(rr, max(gg, bb)), lo = min(rr, min(gg, bb));
+      sumY += luma;
+      sumSat += hi ? (float)(hi - lo) / hi : 0;
+      if (luma >= 235) highlights++;
+      if (xi > 0) { sumGrad += abs(luma - left); gradients++; }
+      if (yi > 0) { sumGrad += abs(luma - prevRow[xi]); gradients++; }
+      prevRow[xi] = luma;
+      left = luma;
+      n++;
+    }
+  }
+  if (n == 0 || cols <= 0) return r;
+  float meanY = sumY / n;
+  r.f[0] = meanY / 255.0f;
+  r.f[1] = (float)highlights / n;
+  r.f[2] = gradients ? (sumGrad / gradients) / max(meanY, 1.0f) : 0;
+  r.f[3] = sumSat / n;
+  r.valid = true;
+  return r;
+}
+
+bool anyCalibration() {
+  for (int i = 0; i < kCalCount; i++) if (calibrated[i]) return true;
+  return false;
+}
+
+// Nearest calibrated surface, or simple rules when nothing is calibrated.
+String classify(const Reflection& r) {
+  if (!r.valid) return "unknown";
+  if (anyCalibration()) {
+    labelMethod = "calibrated";
+    int best = -1;
+    float bestD = INFINITY;
+    for (int i = 0; i < kCalCount; i++) {
+      if (!calibrated[i]) continue;
+      float d = 0;
+      for (int k = 0; k < kFeatureCount; k++) {
+        float diff = (r.f[k] - centroid[i][k]) * kFeatureScale[k];
+        d += diff * diff;
+      }
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return kCalLabels[best];
+  }
+  // Without calibration the image alone cannot separate ice from water, so a shiny or
+  // smooth surface is reported as "wet" and the server combines it with the temperature.
+  labelMethod = "rule";
+  float brightness = r.f[0], highlight = r.f[1], texture = r.f[2], saturation = r.f[3];
+  if (brightness > 0.70f && saturation < 0.15f && highlight < 0.30f) return "snow";
+  if (highlight >= 0.02f || texture < 0.06f) return "wet";
+  return "dry";
+}
+
+void loadCalibration() {
+  prefs.begin("smartwalk", false);
+  for (int i = 0; i < kCalCount; i++) {
+    calibrated[i] = prefs.getBytes(kCalLabels[i], centroid[i], sizeof(centroid[i])) == sizeof(centroid[i]);
+  }
+}
+
+bool calibrate(const String& label) {
+  if (label == "clear") {
+    for (int i = 0; i < kCalCount; i++) {
+      calibrated[i] = false;
+      prefs.remove(kCalLabels[i]);
+    }
+    return true;
+  }
+  for (int i = 0; i < kCalCount; i++) {
+    if (label != kCalLabels[i] || !reflection.valid) continue;
+    memcpy(centroid[i], reflection.f, sizeof(centroid[i]));
+    calibrated[i] = true;
+    prefs.putBytes(kCalLabels[i], centroid[i], sizeof(centroid[i]));
+    surfaceLabel = classify(reflection);
+    return true;
+  }
+  return false;
+}
+
+// Captures a frame, updates the reflection features and label, and optionally returns a JPEG.
+uint8_t* observeImage(size_t* len) {
   if (!cameraReady) return nullptr;
   camera_fb_t* fb = esp_camera_fb_get();  // drop a possibly old frame
   if (fb) esp_camera_fb_return(fb);
   fb = esp_camera_fb_get();
   if (!fb) return nullptr;
+  reflection = analyseFrame(fb);
+  surfaceLabel = classify(reflection);
   uint8_t* out = nullptr;
-  bool ok = frame2jpg(fb, kJpegQuality, &out, len);
-  esp_camera_fb_return(fb);
-  if (!ok) {
+  if (len && !frame2jpg(fb, kJpegQuality, &out, len)) {
     free(out);
-    return nullptr;
+    out = nullptr;
   }
+  esp_camera_fb_return(fb);
   return out;
 }
 
@@ -144,6 +275,29 @@ String jsonString(const String& body, const char* key) {
   return end < 0 ? "" : body.substring(start + 1, end);
 }
 
+int postJson(const char* path, const String& body, String* response) {
+  HTTPClient http;
+  http.setTimeout(kHttpTimeoutMs);
+  http.begin(String(SMARTWALK_API_URL) + path);
+  http.addHeader("Content-Type", "application/json");
+  int code = http.POST(body);
+  if (response) *response = code > 0 ? http.getString() : "";
+  http.end();
+  return code;
+}
+
+void postVision() {
+#if SMARTWALK_SEND_VISION
+  if (WiFi.status() != WL_CONNECTED) return;
+  observeImage(nullptr);
+  String body = String("{\"location_id\":\"") + kLocationId +
+                "\",\"image_id\":\"atoms3r-cam-reflection\",\"label\":\"" + surfaceLabel +
+                "\",\"vision_source\":\"model\",\"image_source\":\"live\"}";
+  int code = postJson("/vision", body, nullptr);
+  Serial.printf("POST /vision label=%s (%s) -> %d\n", surfaceLabel.c_str(), labelMethod.c_str(), code);
+#endif
+}
+
 void postObservation() {
   lastPostAt = millis();
   if (WiFi.status() != WL_CONNECTED) {
@@ -155,13 +309,8 @@ void postObservation() {
   String body = String("{\"location_id\":\"") + kLocationId +
                 "\",\"surface_temperature_c\":" + value +
                 ",\"temperature_source\":\"sensor\"}";
-  HTTPClient http;
-  http.setTimeout(kHttpTimeoutMs);
-  http.begin(String(SMARTWALK_API_URL) + "/observations");
-  http.addHeader("Content-Type", "application/json");
-  int code = http.POST(body);
-  String response = code > 0 ? http.getString() : "";
-  http.end();
+  String response;
+  int code = postJson("/observations", body, &response);
   postResult = code == 200 ? "OK" : "ERR " + String(code);
   if (code == 200) risk = jsonString(response, "risk");
   Serial.printf("POST %s -> %d risk=%s\n", body.c_str(), code, risk.c_str());
@@ -183,12 +332,14 @@ void handleRoot() {
               "/capture.jpg  fresh camera image\n"
               "/snapshot.jpg last button snapshot\n"
               "/thermal.json thermal frame and ROI\n"
+              "/reflection.json reflection features and label\n"
+              "/calibrate?label=dry|wet|ice|snow|clear\n"
               "IP " + ip + "\n");
 }
 
 void handleCapture() {
   size_t len = 0;
-  uint8_t* jpg = captureJpeg(&len);
+  uint8_t* jpg = observeImage(&len);
   if (!jpg) {
     server.send(503, "text/plain", "camera unavailable");
     return;
@@ -227,11 +378,57 @@ void handleThermal() {
   server.send(200, "application/json", s);
 }
 
+String reflectionJson() {
+  String s = "{\"label\":\"" + surfaceLabel + "\",\"method\":\"" + labelMethod + "\",\"features\":";
+  if (reflection.valid) {
+    s += "{";
+    for (int k = 0; k < kFeatureCount; k++) {
+      if (k) s += ",";
+      s += String("\"") + kFeatureNames[k] + "\":" + String(reflection.f[k], 4);
+    }
+    s += "}";
+  } else {
+    s += "null";
+  }
+  s += ",\"calibration\":{";
+  bool first = true;
+  for (int i = 0; i < kCalCount; i++) {
+    if (!calibrated[i]) continue;
+    if (!first) s += ",";
+    first = false;
+    s += String("\"") + kCalLabels[i] + "\":[";
+    for (int k = 0; k < kFeatureCount; k++) {
+      if (k) s += ",";
+      s += String(centroid[i][k], 4);
+    }
+    s += "]";
+  }
+  s += "}}";
+  return s;
+}
+
+void handleReflection() {
+  server.sendHeader("Cache-Control", "no-store");
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", reflectionJson());
+}
+
+// Point the camera at a known surface, then open /calibrate?label=dry (or wet, ice, snow).
+void handleCalibrate() {
+  observeImage(nullptr);
+  if (!calibrate(server.arg("label"))) {
+    server.send(400, "text/plain", "use label=dry|wet|ice|snow|clear with the camera working");
+    return;
+  }
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", reflectionJson());
+}
+
 // ---------- snapshot button ----------
 
 void takeSnapshot() {
   size_t len = 0;
-  uint8_t* jpg = captureJpeg(&len);
+  uint8_t* jpg = observeImage(&len);
   if (jpg) {
     free(snapJpg);
     snapJpg = jpg;
@@ -262,8 +459,17 @@ void checkSerial() {
   if (!Serial.available()) return;
   String line = Serial.readStringUntil('\n');
   line.trim();
-  if (line == "snap") takeSnapshot();
-  else if (line.length()) Serial.println("Commands: snap");
+  if (line == "snap") {
+    takeSnapshot();
+  } else if (line.startsWith("cal ")) {
+    observeImage(nullptr);
+    Serial.println(calibrate(line.substring(4)) ? reflectionJson() : "cal failed");
+  } else if (line == "info") {
+    observeImage(nullptr);
+    Serial.println(reflectionJson());
+  } else if (line.length()) {
+    Serial.println("Commands: snap, info, cal dry|wet|ice|snow|clear");
+  }
 }
 
 // ---------- OLED ----------
@@ -284,7 +490,7 @@ void drawOled() {
   if (isfinite(t)) oled.printf("Road %.1fC (%.1f~%.1f)", t, roiMin, roiMax);
   else oled.print("Road --");
   oled.setCursor(0, 41);
-  oled.printf("API %s  snap %u", postResult.c_str(), snapCount);
+  oled.printf("Img %s  API %s", surfaceLabel.c_str(), postResult.c_str());
   oled.setCursor(0, 52);
   if (WiFi.status() == WL_CONNECTED) oled.print(WiFi.localIP());
   else oled.print("WiFi connecting");
@@ -316,6 +522,7 @@ void setup() {
   }
 
   cameraReady = initCamera();
+  loadCalibration();
 
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
@@ -325,6 +532,8 @@ void setup() {
   server.on("/capture.jpg", handleCapture);
   server.on("/snapshot.jpg", handleSnapshot);
   server.on("/thermal.json", handleThermal);
+  server.on("/reflection.json", handleReflection);
+  server.on("/calibrate", handleCalibrate);
   server.begin();
 }
 
@@ -349,6 +558,7 @@ void loop() {
   }
   if (postNow || now - lastPostAt >= kPostIntervalMs) {
     postNow = false;
+    postVision();
     postObservation();
   }
   if (now - oledAt >= 500) {

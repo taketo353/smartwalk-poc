@@ -18,3 +18,7 @@
 #define SMARTWALK_ROI_COL_END 23
 #define SMARTWALK_ROI_ROW_START 6
 #define SMARTWALK_ROI_ROW_END 17
+
+// 1: estimate the surface from light reflection and send it to POST /vision.
+// Set 0 when the vision PC (RSPNet) sends the labels instead.
+#define SMARTWALK_SEND_VISION 1
