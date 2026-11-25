@@ -51,11 +51,14 @@ constexpr int kCamData[8] = {3, 42, 46, 48, 4, 17, 11, 13};  // D0..D7
 #if SMARTWALK_USE_WIFI
 WebServer server(80);
 #endif
-Adafruit_SSD1306 oled(128, 64, &Wire, -1);
+// The thermal sensor shares Wire with the OLED; don't leave the bus at 100 kHz after a draw.
+constexpr uint32_t kSensorI2cHz = 400000;
+Adafruit_SSD1306 oled(128, 64, &Wire, -1, kSensorI2cHz, kSensorI2cHz);
 Adafruit_MLX90640 mlx;
 
 float frame[kRows * kCols];
 bool cameraReady = false, thermalReady = false, oledReady = false;
+int thermalReadCode = -1;
 uint32_t thermalAt = 0;          // millis() of the last good thermal frame (0 = none)
 float roiMean = NAN, roiMin = NAN, roiMax = NAN;
 uint8_t* snapJpg = nullptr;      // last snapshot taken with the button
@@ -245,7 +248,9 @@ uint8_t* observeImage(size_t* len) {
 // ---------- thermal ----------
 
 void readThermal() {
-  if (!thermalReady || mlx.getFrame(frame) != 0) return;
+  if (!thermalReady) return;
+  thermalReadCode = mlx.getFrame(frame);
+  if (thermalReadCode != 0) return;
   float sum = 0, lo = INFINITY, hi = -INFINITY;
   int n = 0;
   for (int r = SMARTWALK_ROI_ROW_START; r <= SMARTWALK_ROI_ROW_END; r++) {
@@ -542,6 +547,8 @@ void handleCommand(const String& line) {
   } else if (line == "info") {
     observeImage(nullptr);
     Serial.println(reflectionJson());
+    Serial.printf("I2C %lu Hz; OLED=%d MLX=%d CAM=%d; thermal read=%d\n",
+                  (unsigned long)Wire.getClock(), oledReady, thermalReady, cameraReady, thermalReadCode);
   } else if (line.length()) {
     Serial.println("Commands: snap, info, cal dry|wet|ice|snow|clear");
   }
@@ -590,7 +597,7 @@ void setup() {
   pinMode(SMARTWALK_BUTTON_PIN, INPUT_PULLUP);
 #endif
   Wire.begin(SMARTWALK_I2C_SDA, SMARTWALK_I2C_SCL);
-  Wire.setClock(400000);
+  Wire.setClock(kSensorI2cHz);
 
   oledReady = oled.begin(SSD1306_SWITCHCAPVCC, SMARTWALK_OLED_ADDR);
   if (!oledReady) Serial.println("OLED not found");
