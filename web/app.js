@@ -397,6 +397,8 @@ if (isAdmin) {
   setText('page-title', '路面の観測データ');
   get('student-link').removeAttribute('aria-current');
   get('admin-link').setAttribute('aria-current', 'page');
+  document.body.classList.add('admin');
+  document.querySelector('.page-intro p').textContent = '観測値・判定結果・入力元・履歴を確認する運用担当者向けの画面です。判定は参考値です。';
 }
 get('admin-view').hidden = !isAdmin;
 buildMap();

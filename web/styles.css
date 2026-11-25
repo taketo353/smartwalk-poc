@@ -621,7 +621,7 @@ body.flashy #pattern-watermark {
   pointer-events: none;
 }
 
-.curtain-banner, .ornament-divider, .canopy-decor, .crown-badge, .bow-decor { display: none; }
+.curtain-banner, .ornament-divider, .canopy-decor, .crown-badge, .bow-decor, .window-decor { display: none; }
 
 body.flashy .curtain-banner {
   display: block;
@@ -690,4 +690,100 @@ body.flashy .window-decor {
   width: min(70%, 9rem);
   opacity: .5;
   pointer-events: none;
+}
+
+/* ===== 大学向け画面(/admin): 業務用の落ち着いたスタイル ===== */
+body.admin {
+  --muted: #55606b;
+  --accent: #1f3a5f;
+  --line: #d5dae0;
+  --risk-color: #55606b;
+  color: #1c2530;
+  background: #f3f5f8;
+  font-size: 15px;
+}
+
+body.admin .site-header { background: #1f3a5f; border-bottom: 0; }
+body.admin.scrolled .site-header { background: #1f3a5f; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 1px 4px rgba(15, 25, 40, .25); }
+body.admin .header-content { min-height: 3.5rem; }
+body.admin .brand { color: #fff; font-size: 1.1rem; letter-spacing: 0; }
+body.admin .brand-mark { background: #fff; border-radius: .2rem; width: 1.5rem; }
+body.admin .brand-mark::before, body.admin .brand-mark::after { background: #1f3a5f; }
+body.admin nav a { color: #c3cedd; border-radius: .2rem; min-height: 2.25rem; font-weight: 600; }
+body.admin nav a:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+body.admin nav a[aria-current="page"] { background: #fff; color: #1f3a5f; }
+body.admin nav a:active, body.admin .brand:active { transform: none; }
+
+body.admin main { padding-block: 1.5rem 2.5rem; }
+body.admin .page-intro { margin-bottom: 1.25rem; padding-bottom: .9rem; border-bottom: 2px solid #1f3a5f; }
+body.admin h1 { font-size: 1.4rem; letter-spacing: 0; margin-bottom: .25rem; }
+body.admin h2 { font-size: .95rem; letter-spacing: 0; }
+body.admin .page-intro p { font-size: .85rem; }
+
+body.admin .card {
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: .25rem;
+  background: #fff;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+body.admin .card h2 {
+  margin-bottom: .6rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--line);
+  font-size: .9rem;
+  font-weight: 700;
+  color: #1f3a5f;
+}
+
+/* 危険度パネル: 白地+左の色帯+色付きテキスト(グラデーションなし) */
+body.admin .risk-panel {
+  --risk-color: #55606b;
+  color: #1c2530;
+  background: #fff;
+  border-left: 6px solid var(--risk-color);
+  box-shadow: none;
+  transition: border-color .2s ease;
+}
+
+body.admin .risk-panel[data-risk="low"] { --risk-color: #1a7a4f; }
+body.admin .risk-panel[data-risk="caution"] { --risk-color: #b26a00; }
+body.admin .risk-panel[data-risk="high"] { --risk-color: #b3261e; }
+body.admin .risk-panel[data-risk="unknown"] { --risk-color: #55606b; }
+
+body.admin .risk-panel h2 { color: #1f3a5f; text-transform: none; letter-spacing: 0; font-size: .9rem; opacity: 1; }
+body.admin .risk-value { margin-block: .4rem .5rem; font-size: 2rem; font-weight: 700; letter-spacing: 0; color: var(--risk-color); }
+body.admin .risk-icon { width: 2.4rem; background: var(--risk-color); color: #fff; border-radius: .25rem; }
+body.admin .risk-icon-glyph { width: 1.4rem; height: 1.4rem; }
+body.admin .risk-reason { color: #1c2530; font-size: .9rem; }
+body.admin .observed { color: var(--muted); border-top: 1px solid var(--line); margin-top: .9rem; padding-top: .6rem; font-size: .82rem; }
+body.admin .observed time { color: #1c2530; font-weight: 600; }
+body.admin .live-dot, body.admin .live-dot::before { background: var(--risk-color); }
+body.admin .live-dot::before { animation: none; }
+body.admin .sample-notice { background: #fff6e0; color: #6b4a00; border: 1px solid #ecd9a6; border-radius: .2rem; }
+
+body.admin .overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
+body.admin .location-name { font-weight: 700; margin-bottom: .5rem; }
+body.admin .slope-map { background: #f3f5f8; border: 1px solid var(--line); }
+body.admin figcaption { text-align: left; }
+
+body.admin .details { margin-top: .75rem; }
+body.admin .details-grid { border-radius: .2rem; gap: 1px; background: var(--line); }
+body.admin .details-grid div { background: #fff; padding: .55rem .75rem; }
+body.admin dt { font-size: .75rem; font-weight: 600; letter-spacing: .02em; }
+body.admin dd { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+body.admin table { font-size: .82rem; }
+body.admin th { background: #e8edf3; color: #1f3a5f; font-weight: 700; border-bottom: 2px solid #b8c2cf; white-space: nowrap; }
+body.admin th, body.admin td { padding: .5rem .65rem; }
+body.admin tbody tr:nth-child(even) { background: #f7f9fb; }
+body.admin tbody tr:hover { background: #e8eef6; }
+body.admin td { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 40rem) {
+  body.admin .overview { grid-template-columns: minmax(0, 1fr); }
 }
