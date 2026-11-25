@@ -1,5 +1,12 @@
 # AtomS3R ファームウェア
 
+> 実機担当のファイル一覧
+> - [SETUP.md](SETUP.md):デモPCの準備（誰のPCでも、USBケーブルでつなぐ）
+> - [SmartWalkCam/](SmartWalkCam/):観測ノード（レンピン本体）のファームウェア
+> - [DESIGN.md](DESIGN.md):設計と進捗
+>
+> 以下は表示ノード（AtomS3R単体、Wi-Fi接続）の説明です。
+
 AtomS3R は約5秒ごとに `POST /observations` で路面温度を送信し、別の周期で `GET /status` から `risk` を取得します。観測地点は `kakuma-slope-01` です。起動時は青で、有効な `risk` を最後に受け取ってから20秒経つと青に戻ります。
 
 | `risk` | 色 | LCD 表示 |
